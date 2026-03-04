@@ -6,43 +6,101 @@
     <style>
       @font-face { font-family: 'Brother1816'; src: url('brother1816-medium.otf') format('opentype'); }
       * { box-sizing: border-box; margin: 0; padding: 0; }
+
       body {
-        background: #ffffff; color: #1a1a1a;
-        display: flex; flex-direction: column;
-        align-items: center; justify-content: center;
+        background: #ffffff;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: space-between;
         height: 100vh;
         font-family: 'Brother1816', Arial, sans-serif;
-        text-align: center; padding: 40px;
+        overflow: hidden;
+        padding: 40px 24px 36px;
       }
+
       #logoWrap {
-        width: 200px; overflow: hidden;
-        height: 68px; margin-bottom: 40px;
+        width: 120px; overflow: hidden; height: 42px; flex-shrink: 0;
       }
       #logoWrap img { width: 100%; display: block; }
-      h1 {
-        font-size: 52px; line-height: 1.3;
-        letter-spacing: 0.02em;
+
+      #message {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        text-align: center;
       }
+
+      #farewell {
+        font-size: 20vw;
+        font-weight: 900;
+        text-transform: uppercase;
+        color: #8B0000;
+        line-height: 0.85;
+        letter-spacing: -0.01em;
+        width: 100%;
+      }
+
+      #nameText {
+        font-size: 16vw;
+        font-weight: 900;
+        text-transform: uppercase;
+        color: #8B0000;
+        line-height: 0.9;
+        letter-spacing: -0.01em;
+        width: 100%;
+        word-break: break-word;
+      }
+
       button {
-        margin-top: 44px; padding: 20px 48px; font-size: 22px;
-        border-radius: 14px; cursor: pointer;
-        border: none; background: #1a1a1a; color: white;
-        font-family: inherit; letter-spacing: 0.04em;
+        flex-shrink: 0;
+        padding: 16px 44px;
+        font-size: 18px;
+        border-radius: 12px;
+        cursor: pointer;
+        border: 2px solid #1a1a1a;
+        background: transparent;
+        color: #1a1a1a;
+        font-family: inherit;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
         -webkit-tap-highlight-color: transparent;
-        transition: opacity 0.2s;
+        transition: background 0.15s, color 0.15s;
       }
-      button:active { opacity: 0.8; }
+      button:active { background: #1a1a1a; color: white; }
     </style>
   </head>
   <body>
     <div id="logoWrap"><img src="Versa Logo.png" alt="Versa"></div>
-    <h1 id="message"></h1>
+
+    <div id="message">
+      <div id="farewell"></div>
+      <div id="nameText"></div>
+    </div>
+
     <button onclick="goHome()">Close</button>
+
     <script>
+      const farewells = [
+        'Goodbye', 'See you', 'Cheers', 'Take care',
+        'Later', 'Au revoir', 'Ciao', 'See ya'
+      ];
+
+      const farewell = farewells[Math.floor(Math.random() * farewells.length)];
       const name = sessionStorage.getItem('visitorName') || 'there';
-      document.getElementById('message').textContent = `Goodbye, ${name}.`;
+
+      document.getElementById('farewell').textContent = farewell + ',';
+      document.getElementById('nameText').textContent = name + '.';
+
+      const nameEl = document.getElementById('nameText');
+      if (name.length > 10) nameEl.style.fontSize = '11vw';
+      if (name.length > 16) nameEl.style.fontSize = '8vw';
+
       function goHome() { window.location.href = 'index.html'; }
-      setTimeout(goHome, 3000);
+      setTimeout(goHome, 4000);
     </script>
   </body>
 </html>
