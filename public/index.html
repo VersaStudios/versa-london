@@ -49,22 +49,23 @@
       #centre {
         display: flex; flex-direction: column;
         align-items: center; flex-shrink: 0;
+        margin-top: 8px;
       }
 
-      #logoWrap { width: 280px; overflow: hidden; height: 76px; }
+      #logoWrap { width: 380px; overflow: hidden; height: 160px; }
       #logoWrap img { width: 100%; display: block; }
 
       #siteLabel {
-        font-size: 18px; font-weight: bold;
+        font-size: 28px; font-weight: bold;
         letter-spacing: 0.18em; color: #888;
-        text-transform: uppercase; margin-top: 10px;
+        text-transform: uppercase; margin-top: 14px;
       }
 
       /* ── Buttons ── */
       #buttons {
         width: 100%; display: flex;
         padding: 0 28px 32px; gap: 24px;
-        height: 62vh; flex-shrink: 0;
+        height: 54vh; flex-shrink: 0;
       }
 
       .action-btn {
@@ -94,6 +95,10 @@
       }
       /* Ensure all direct children sit above the bg */
       body > * { position: relative; z-index: 1; }
+
+      /* ── Safe edge padding ── */
+      body { padding-left: max(24px, env(safe-area-inset-left));
+             padding-right: max(24px, env(safe-area-inset-right)); }
     </style>
   </head>
   <body>
