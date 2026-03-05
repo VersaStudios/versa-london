@@ -10,103 +10,124 @@
 
       body {
         background: #ffffff;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: space-between;
-        height: 100vh;
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: space-between;
+        height: 100vh; overflow: hidden;
         font-family: 'Brother1816', Arial, sans-serif;
-        overflow: hidden;
-        padding: 40px 24px 36px;
+        padding: 36px 24px 32px;
       }
 
-      /* Small logo top centre */
-      #logoWrap {
-        width: 120px; overflow: hidden; height: 42px; flex-shrink: 0;
-      }
+      #logoWrap { width: 120px; overflow: hidden; height: 42px; flex-shrink: 0; }
       #logoWrap img { width: 100%; display: block; }
 
-      /* Giant poster text */
       #message {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        width: 100%;
-        text-align: center;
-        gap: 0;
+        flex: 1; display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        width: 100%; text-align: center;
       }
 
       #greeting {
-        font-size: 22vw;
-        font-weight: 900;
-        text-transform: uppercase;
-        color: #8B0000;
-        line-height: 0.85;
-        letter-spacing: -0.01em;
-        width: 100%;
+        font-size: 20vw; font-weight: 900;
+        text-transform: uppercase; color: #1a1a1a;
+        line-height: 0.85; letter-spacing: -0.01em; width: 100%;
       }
 
       #nameText {
-        font-size: 16vw;
-        font-weight: 900;
-        text-transform: uppercase;
-        color: #8B0000;
-        line-height: 0.9;
-        letter-spacing: -0.01em;
-        width: 100%;
-        word-break: break-word;
+        font-size: 15vw; font-weight: 900;
+        text-transform: uppercase; color: #1a1a1a;
+        line-height: 0.9; letter-spacing: -0.01em;
+        width: 100%; word-break: break-word;
       }
 
-      /* Close button */
+      #subText {
+        font-size: 5vw; font-weight: bold;
+        text-transform: uppercase; color: #ccc;
+        letter-spacing: 0.1em; margin-top: 14px;
+      }
+
       button {
-        flex-shrink: 0;
-        padding: 16px 44px;
-        font-size: 18px;
-        border-radius: 12px;
-        cursor: pointer;
-        border: 2px solid #1a1a1a;
-        background: transparent;
-        color: #1a1a1a;
-        font-family: inherit;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
+        flex-shrink: 0; padding: 16px 44px; font-size: 18px;
+        border-radius: 12px; cursor: pointer;
+        border: 2px solid #1a1a1a; background: transparent; color: #1a1a1a;
+        font-family: inherit; letter-spacing: 0.08em; text-transform: uppercase;
         -webkit-tap-highlight-color: transparent;
         transition: background 0.15s, color 0.15s;
       }
       button:active { background: #1a1a1a; color: white; }
+
+      #timerBar {
+        position: fixed; bottom: 0; left: 0;
+        height: 4px; background: #1a1a1a; width: 100%;
+        transform-origin: left; transition: transform 1s linear;
+      }
     </style>
   </head>
   <body>
     <div id="logoWrap"><img src="Versa Logo.png" alt="Versa"></div>
-
     <div id="message">
       <div id="greeting"></div>
       <div id="nameText"></div>
+      <div id="subText"></div>
     </div>
-
     <button onclick="goHome()">Close</button>
+    <div id="timerBar"></div>
 
     <script>
-      const greetings = [
-        'Hello', 'Hi', 'Hey', 'Bonjour', 'Hola',
-        'Ciao', 'Welcome', 'Good to see you', 'Alright', 'Now then'
+      // ── Greeting lists ──
+      const hour = new Date().getHours();
+      const mins = new Date().getHours() * 60 + new Date().getMinutes();
+
+      const generalGreetings = [
+        'Howdy', 'Welcome', 'Nice to see you',
+        'Good to see you', 'Bonjour', 'Hello', 'Hey'
       ];
 
-      const greeting = greetings[Math.floor(Math.random() * greetings.length)];
-      const name = sessionStorage.getItem('visitorName') || 'there';
+      const timeGreetings = [];
+      if (mins < 660)       timeGreetings.push('Good Morning');   // before 11am
+      if (mins >= 720 && mins < 1050) timeGreetings.push('Good Afternoon'); // noon–5:30pm
+      if (mins >= 1050)     timeGreetings.push('Good Evening');   // after 5:30pm
+
+      const newVisitorGreetings = [
+        'Welcome aboard', 'A warm welcome', 'Delighted to see you',
+        'Pleased to meet you', 'Thanks for joining us', "We're glad you're here"
+      ];
+
+      const bottomMessages = [
+        'Nice to see you', 'Good to see you',
+        'Great to see you', 'Welcome to Versa'
+      ];
+
+      const isNew = sessionStorage.getItem('isNewVisitor') === 'true';
+      const name  = sessionStorage.getItem('visitorName') || 'there';
+
+      // Pick greeting: time-specific 40% of the time if available, else general
+      let pool = [...generalGreetings];
+      if (timeGreetings.length > 0) pool = [...pool, ...timeGreetings, ...timeGreetings]; // weight time ones
+      if (isNew) pool = [...newVisitorGreetings];
+
+      const greeting = pool[Math.floor(Math.random() * pool.length)];
+      const subText  = bottomMessages[Math.floor(Math.random() * bottomMessages.length)];
 
       document.getElementById('greeting').textContent = greeting + ',';
-      document.getElementById('nameText').textContent = name + '.';
+      document.getElementById('nameText').textContent  = name + '.';
+      document.getElementById('subText').textContent   = subText;
 
-      // Scale down font if name is very long
+      // Scale down for long names
       const nameEl = document.getElementById('nameText');
       if (name.length > 10) nameEl.style.fontSize = '11vw';
       if (name.length > 16) nameEl.style.fontSize = '8vw';
 
-      function goHome() { window.location.href = 'index.html'; }
-      setTimeout(goHome, 4000);
+      // ── Timer (3s auto close + red bar) ──
+      let timeLeft = 3;
+      const bar = document.getElementById('timerBar');
+      bar.style.transform = 'scaleX(1)';
+      const t = setInterval(() => {
+        timeLeft--;
+        bar.style.transform = `scaleX(${timeLeft / 3})`;
+        if (timeLeft <= 0) { clearInterval(t); goHome(); }
+      }, 1000);
+
+      function goHome() { clearInterval(t); window.location.href = 'index.html'; }
     </script>
   </body>
 </html>
