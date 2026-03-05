@@ -18,9 +18,10 @@
 
       /* ── Top bar ── */
       #topBar {
-        width: 100%; display: flex;
-        justify-content: space-between; align-items: flex-start;
+        width: 100%; display: grid;
+        grid-template-columns: 40px 1fr 40px;
         padding: 28px 40px 0; flex-shrink: 0;
+        align-items: start;
       }
 
       #adminBtn {
@@ -29,7 +30,7 @@
       #adminBtn:hover { opacity: 1; }
 
       /* Clock + weather block */
-      #topRight { text-align: right; }
+      #topRight { text-align: right; justify-self: end; }
 
       #clock {
         font-size: 14px; font-weight: bold;
@@ -48,8 +49,7 @@
       /* ── Centre: Logo ── */
       #centre {
         display: flex; flex-direction: column;
-        align-items: center; flex-shrink: 0;
-        flex: 1; justify-content: center; width: 100%;
+        align-items: center;
       }
 
       #logoWrap { width: 380px; overflow: hidden; height: 160px; }
@@ -62,11 +62,11 @@
       }
 
       /* ── Buttons ── */
+      #spacer { flex: 1; }
       #buttons {
         width: 100%; display: flex;
         padding: 0 28px 32px; gap: 24px;
         flex: 0 0 52vh;
-        margin-top: 20px;
       }
 
       .action-btn {
@@ -108,6 +108,10 @@
 
     <div id="topBar">
       <img id="adminBtn" src="List.png" alt="Admin" onclick="window.location.href='monitor.html'">
+      <div id="centre">
+        <div id="logoWrap"><img src="Versa Logo.png" alt="Versa"></div>
+        <div id="siteLabel">London</div>
+      </div>
       <div id="topRight">
         <div id="clock"></div>
         <div id="weatherBlock">
@@ -120,12 +124,8 @@
       </div>
     </div>
 
-    <div id="centre">
-      <div id="logoWrap"><img src="Versa Logo.png" alt="Versa"></div>
-      <div id="siteLabel">London</div>
-    </div>
 
-
+    <div id="spacer"></div>
     <div id="buttons">
       <button class="action-btn" onclick="window.location.href='page2.html'">In</button>
       <button class="action-btn" onclick="window.location.href='page3.html'">Out</button>
