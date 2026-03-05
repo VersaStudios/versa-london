@@ -39,9 +39,9 @@
       #gateLogo img { width: 100%; display: block; }
 
       #gateHeading {
-        font-size: 12vw; font-weight: 900;
+        font-size: 5vw; font-weight: 900;
         text-transform: uppercase; color: #1a1a1a;
-        line-height: 0.85; letter-spacing: -0.01em;
+        line-height: 1; letter-spacing: -0.01em;
         margin: 24px 0 40px;
       }
 
@@ -205,10 +205,22 @@
       <div id="gateTopBar">
         <div id="gateLogo"><img src="Versa Logo.png" alt="Versa"></div>
       </div>
-      <div id="gateHeading">Sign In<br>Control.</div>
-      <input id="codeInput" type="password" placeholder="• • • •" maxlength="10"
-             autocomplete="off" inputmode="numeric">
-      <button onclick="checkCode()">Enter</button>
+      <div id="gateHeading">Staff Access</div>
+      <div id="keypadDisplay"></div>
+      <div id="keypad">
+        <button class="kp-btn" onclick="kpPress('1')">1</button>
+        <button class="kp-btn" onclick="kpPress('2')">2</button>
+        <button class="kp-btn" onclick="kpPress('3')">3</button>
+        <button class="kp-btn" onclick="kpPress('4')">4</button>
+        <button class="kp-btn" onclick="kpPress('5')">5</button>
+        <button class="kp-btn" onclick="kpPress('6')">6</button>
+        <button class="kp-btn" onclick="kpPress('7')">7</button>
+        <button class="kp-btn" onclick="kpPress('8')">8</button>
+        <button class="kp-btn" onclick="kpPress('9')">9</button>
+        <button class="kp-btn" onclick="kpDelete()">⌫</button>
+        <button class="kp-btn" onclick="kpPress('0')">0</button>
+        <button class="kp-btn enter-btn" onclick="checkCode()">Enter</button>
+      </div>
       <div id="codeError"></div>
     </div>
 
@@ -300,6 +312,8 @@
           initMonitor();
         } else {
           document.getElementById('codeError').textContent = 'Incorrect code.';
+          kpValue = '';
+          document.getElementById('keypadDisplay').textContent = '';
         }
       }
 
