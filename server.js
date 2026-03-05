@@ -60,7 +60,7 @@ function getDefaultPeople() {
           { id: 'p12', name: 'Oliver Riches',   jobTitle: 'Technical Manager',  nfcId: null }
         ]
       },
-
+      { id: 'silverscape', name: 'Silverscape', visitorProject: false, people: [] },
       { id: 'visitor',     name: 'Visitor',     visitorProject: true,  people: [] }
     ]
   };
@@ -204,7 +204,7 @@ app.post('/api/projects', (req, res) => {
   if (!name) return res.status(400).json({ error: 'Project name required' });
   if (peopleData.projects.some(p => p.name.toLowerCase() === name.toLowerCase()))
     return res.status(409).json({ error: 'Project already exists' });
-  const project = { id: uid(), name, visitorProject: false, people: [] };
+  const project = { id: uid(), name, visitorProject: false, suspended: false, people: [] };
   peopleData.projects.push(project);
   savePeople(peopleData);
   res.json({ success: true, project });
@@ -216,6 +216,51 @@ app.delete('/api/projects/:projectId', (req, res) => {
   peopleData.projects.splice(idx, 1);
   savePeople(peopleData);
   res.json({ success: true });
+});
+
+// ── Suspend / unsuspend project ──────────────────────────────
+app.put('/api/projects/:projectId/suspend', (req, res) => {
+  const project = peopleData.projects.find(p => p.id === req.params.projectId);
+  if (!project) return res.status(404).json({ error: 'Project not found' });
+  project.suspended = !project.suspended;
+  savePeople(peopleData);
+  io.emit('people-update', peopleData);
+  res.json({ success: true, suspended: project.suspended });
+});
+
+// ── Notice API ───────────────────────────────────────────────
+const NOTICE_FILE = path.join(__dirname, 'notice.json');
+
+function loadNotice() {
+  try { if (fs.existsSync(NOTICE_FILE)) return JSON.parse(fs.readFileSync(NOTICE_FILE, 'utf8')); } catch (e) {}
+  return { text: '', updatedAt: null };
+}
+function saveNotice(d) { fs.writeFileSync(NOTICE_FILE, JSON.stringify(d, null, 2)); }
+
+let noticeData = loadNotice();
+
+// Auto-clear notice at midnight
+function scheduleNoticeClear() {
+  const now = new Date();
+  const midnight = new Date(now);
+  midnight.setHours(24, 0, 2, 0);
+  setTimeout(() => {
+    noticeData = { text: '', updatedAt: null };
+    saveNotice(noticeData);
+    io.emit('notice-update', noticeData);
+    scheduleNoticeClear();
+  }, midnight - now);
+}
+scheduleNoticeClear();
+
+app.get('/api/notice', (req, res) => res.json(noticeData));
+
+app.post('/api/notice', (req, res) => {
+  const { text } = req.body;
+  noticeData = { text: text || '', updatedAt: text ? new Date().toISOString() : null };
+  saveNotice(noticeData);
+  io.emit('notice-update', noticeData);
+  res.json({ success: true, notice: noticeData });
 });
 
 app.get('/api/visitors', (req, res) => res.json(signinData.currentVisitors));
@@ -294,7 +339,21 @@ function scheduleAutoSignout() {
 }
 scheduleAutoSignout();
 
-io.on('connection', socket => socket.emit('update', signinData.currentVisitors));
+// Filter suspended projects from people list for sign-in pages
+app.get('/api/people/active', (req, res) => {
+  const active = {
+    projects: peopleData.projects
+      .filter(p => !p.suspended)
+      .map(p => ({ ...p }))
+  };
+  res.json(active);
+});
+
+io.on('connection', socket => {
+  socket.emit('update', signinData.currentVisitors);
+  socket.emit('notice-update', noticeData);
+  socket.emit('people-update', peopleData);
+});
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => console.log(`Versa London running on port ${PORT}`));
