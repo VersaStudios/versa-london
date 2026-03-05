@@ -170,6 +170,10 @@
       .del-project-btn:hover { background: rgba(255,255,255,0.15); }
 
       #globalStatus { margin-top: 12px; font-size: 14px; color: #c00; min-height: 1.2em; text-align: center; }
+
+      /* ── Safe edge padding ── */
+      body { padding-left: max(24px, env(safe-area-inset-left));
+             padding-right: max(24px, env(safe-area-inset-right)); }
     </style>
   </head>
   <body>
