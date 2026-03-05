@@ -33,25 +33,29 @@
       #gateLogo img { width: 100%; display: block; }
 
       #gateHeading {
-        font-size: 12vw; font-weight: 900;
+        font-size: 5vw; font-weight: 900;
         text-transform: uppercase; color: #1a1a1a;
-        line-height: 0.85; letter-spacing: -0.01em;
+        line-height: 1; letter-spacing: -0.01em;
         margin: 24px 0 40px;
       }
 
-      #codeInput {
+      #keypadDisplay {
         width: 100%; padding: 18px 20px; border-radius: 14px;
-        border: 2px solid #1a1a1a; font-size: 32px; font-family: inherit;
-        background: white; color: #1a1a1a; outline: none;
-        letter-spacing: 0.3em; text-align: center;
+        border: 2px solid #1a1a1a; font-size: 40px; font-family: inherit;
+        background: white; color: #1a1a1a; text-align: center;
+        letter-spacing: 0.4em; min-height: 72px; margin-bottom: 16px;
       }
-      #codeInput:focus { box-shadow: 0 0 0 3px rgba(0,0,0,0.08); }
-      #enterBtn {
-        width: 100%; margin-top: 16px; padding: 20px; font-size: 22px;
-        border-radius: 14px; cursor: pointer; border: none;
-        background: #1a1a1a; color: white; font-family: inherit;
-        letter-spacing: 0.06em; text-transform: uppercase;
+      #keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+      .kp-btn {
+        padding: 22px 0; font-size: 28px; font-weight: bold;
+        border-radius: 14px; cursor: pointer; border: 2px solid #1a1a1a;
+        background: white; color: #1a1a1a; font-family: inherit;
+        -webkit-tap-highlight-color: transparent;
+        transition: background 0.1s, color 0.1s;
       }
+      .kp-btn:active { background: #1a1a1a; color: white; }
+      .kp-btn.enter-btn { background: #1a1a1a; color: white; font-size: 18px; letter-spacing: 0.06em; }
+      .kp-btn.enter-btn:active { background: #444; }
       #codeError { color: #1a1a1a; margin-top: 12px; font-size: 16px; font-weight: bold; min-height: 1.2em; }
 
       /* ── Main panel ── */
@@ -239,9 +243,21 @@
         <div id="gateLogo"><img src="Versa Logo.png" alt="Versa"></div>
       </div>
       <div id="gateHeading">Manage.</div>
-      <input id="codeInput" type="password" placeholder="• • • •" maxlength="10"
-             autocomplete="off" inputmode="numeric">
-      <button id="enterBtn" onclick="checkCode()">Enter</button>
+      <div id="keypadDisplay"></div>
+      <div id="keypad">
+        <button class="kp-btn" onclick="kpPress('1')">1</button>
+        <button class="kp-btn" onclick="kpPress('2')">2</button>
+        <button class="kp-btn" onclick="kpPress('3')">3</button>
+        <button class="kp-btn" onclick="kpPress('4')">4</button>
+        <button class="kp-btn" onclick="kpPress('5')">5</button>
+        <button class="kp-btn" onclick="kpPress('6')">6</button>
+        <button class="kp-btn" onclick="kpPress('7')">7</button>
+        <button class="kp-btn" onclick="kpPress('8')">8</button>
+        <button class="kp-btn" onclick="kpPress('9')">9</button>
+        <button class="kp-btn" onclick="kpDelete()">⌫</button>
+        <button class="kp-btn" onclick="kpPress('0')">0</button>
+        <button class="kp-btn enter-btn" onclick="checkCode()">Enter</button>
+      </div>
       <div id="codeError"></div>
     </div>
 
@@ -295,12 +311,21 @@
       document.body.classList.add('gate-mode');
       let peopleData = null;
 
-      document.getElementById('codeInput').addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') checkCode();
-      });
+      let kpValue = '';
+      function kpPress(digit) {
+        if (kpValue.length >= 6) return;
+        kpValue += digit;
+        document.getElementById('keypadDisplay').textContent = '•'.repeat(kpValue.length);
+        document.getElementById('codeError').textContent = '';
+        if (kpValue.length === ACCESS_CODE.length) setTimeout(checkCode, 200);
+      }
+      function kpDelete() {
+        kpValue = kpValue.slice(0, -1);
+        document.getElementById('keypadDisplay').textContent = '•'.repeat(kpValue.length);
+      }
 
       function checkCode() {
-        if (document.getElementById('codeInput').value.trim() === ACCESS_CODE) {
+        if (kpValue === ACCESS_CODE) {
           document.getElementById('access-box').style.display = 'none';
           document.getElementById('logo').style.display = 'block';
           document.getElementById('managePanel').style.display = 'block';
@@ -311,7 +336,8 @@
           loadNotice();
         } else {
           document.getElementById('codeError').textContent = 'Incorrect code.';
-          document.getElementById('codeInput').value = '';
+          kpValue = '';
+          document.getElementById('keypadDisplay').textContent = '';
         }
       }
 
