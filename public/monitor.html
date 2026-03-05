@@ -39,31 +39,34 @@
       #gateLogo img { width: 100%; display: block; }
 
       #gateHeading {
-        font-size: 18vw; font-weight: 900;
+        font-size: 12vw; font-weight: 900;
         text-transform: uppercase; color: #1a1a1a;
         line-height: 0.85; letter-spacing: -0.01em;
-        margin: 16px 0 24px;
+        margin: 24px 0 40px;
       }
 
-      #access-box input {
-        width: 100%; padding: 18px 20px;
-        border-radius: 14px; border: 2px solid #1a1a1a;
-        font-size: 32px; font-family: inherit;
-        background: white; color: #1a1a1a; outline: none;
-        letter-spacing: 0.3em; text-align: center;
-        -webkit-user-select: text;
+      /* Keypad display */
+      #keypadDisplay {
+        width: 100%; padding: 18px 20px; border-radius: 14px;
+        border: 2px solid #1a1a1a; font-size: 40px; font-family: inherit;
+        background: white; color: #1a1a1a; text-align: center;
+        letter-spacing: 0.4em; min-height: 72px; margin-bottom: 16px;
       }
-      #access-box input:focus { border-color: #1a1a1a; box-shadow: 0 0 0 3px rgba(0,0,0,0.08); }
-
-      #access-box button {
-        width: 100%; margin-top: 16px; padding: 20px; font-size: 22px;
-        border-radius: 14px; cursor: pointer; border: none;
-        background: #1a1a1a; color: white; font-family: inherit;
-        letter-spacing: 0.06em; text-transform: uppercase;
+      /* Keypad grid */
+      #keypad {
+        display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+      }
+      .kp-btn {
+        padding: 22px 0; font-size: 28px; font-weight: bold;
+        border-radius: 14px; cursor: pointer; border: 2px solid #1a1a1a;
+        background: white; color: #1a1a1a; font-family: inherit;
         -webkit-tap-highlight-color: transparent;
-        transition: opacity 0.15s;
+        transition: background 0.1s, color 0.1s;
       }
-      #access-box button:active { opacity: 0.8; }
+      .kp-btn:active, .kp-btn.pressed { background: #1a1a1a; color: white; }
+      .kp-btn.del-btn { font-size: 22px; }
+      .kp-btn.enter-btn { background: #1a1a1a; color: white; font-size: 18px; letter-spacing: 0.06em; }
+      .kp-btn.enter-btn:active { background: #444; }
 
       #codeError {
         color: #1a1a1a; margin-top: 12px; min-height: 1.2em;
@@ -151,6 +154,48 @@
         pointer-events: none;
       }
       body > * { position: relative; z-index: 1; }
+
+      /* Person history modal */
+      #personModal {
+        display: none; position: fixed; inset: 0;
+        background: rgba(0,0,0,0.55); z-index: 200;
+        align-items: center; justify-content: center; padding: 20px;
+      }
+      #personModal.open { display: flex; }
+      #personModalBox {
+        background: white; border-radius: 20px;
+        width: 100%; max-width: 560px; max-height: 80vh;
+        display: flex; flex-direction: column;
+        box-shadow: 0 12px 48px rgba(0,0,0,0.25); overflow: hidden;
+      }
+      #personModalHeader {
+        background: #1a1a1a; color: white; padding: 20px 24px;
+        display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;
+      }
+      #personModalHeader h3 { font-size: 18px; margin: 0; }
+      #personModalHeader .sub { font-size: 13px; color: rgba(255,255,255,0.6); margin-top: 3px; }
+      #personModalClose {
+        background: rgba(255,255,255,0.15); border: none; color: white;
+        border-radius: 8px; padding: 6px 14px; cursor: pointer;
+        font-family: inherit; font-size: 14px; flex-shrink: 0;
+      }
+      #personModalClose:hover { background: rgba(255,255,255,0.25); }
+      #personModalBody { overflow-y: auto; flex: 1; }
+      #personModalBody table { border-collapse: collapse; width: 100%; }
+      #personModalBody th, #personModalBody td {
+        padding: 11px 16px; border-bottom: 1px solid #f0f0f0;
+        text-align: left; font-size: 14px; white-space: nowrap;
+      }
+      #personModalBody th {
+        background: #f8f8f8; color: #555; font-size: 12px;
+        letter-spacing: 0.05em; text-transform: uppercase;
+      }
+      #personModalBody tr:last-child td { border-bottom: none; }
+      .name-link {
+        cursor: pointer; text-decoration: underline;
+        text-decoration-color: rgba(0,0,0,0.25); text-underline-offset: 3px;
+      }
+      .name-link:hover { text-decoration-color: #1a1a1a; }
     </style>
   </head>
   <body>
@@ -160,7 +205,7 @@
       <div id="gateTopBar">
         <div id="gateLogo"><img src="Versa Logo.png" alt="Versa"></div>
       </div>
-      <div id="gateHeading">Monitor.</div>
+      <div id="gateHeading">Sign In<br>Control.</div>
       <input id="codeInput" type="password" placeholder="• • • •" maxlength="10"
              autocomplete="off" inputmode="numeric">
       <button onclick="checkCode()">Enter</button>
@@ -210,6 +255,19 @@
       <div id="lastUpdated"></div>
     </div>
 
+
+    <div id="personModal">
+      <div id="personModalBox">
+        <div id="personModalHeader">
+          <div>
+            <h3 id="personModalName"></h3>
+            <div class="sub" id="personModalSub"></div>
+          </div>
+          <button id="personModalClose" onclick="closePersonModal()">Close</button>
+        </div>
+        <div id="personModalBody"></div>
+      </div>
+    </div>
     <script src="/socket.io/socket.io.js"></script>
     <script>
       const ACCESS_CODE = '1234';
@@ -218,12 +276,21 @@
       // Start in gate mode
       document.body.classList.add('gate-mode');
 
-      document.getElementById('codeInput').addEventListener('keydown', e => {
-        if (e.key === 'Enter') checkCode();
-      });
+      let kpValue = '';
+      function kpPress(digit) {
+        if (kpValue.length >= 6) return;
+        kpValue += digit;
+        document.getElementById('keypadDisplay').textContent = '•'.repeat(kpValue.length);
+        document.getElementById('codeError').textContent = '';
+        if (kpValue.length === ACCESS_CODE.length) setTimeout(checkCode, 200);
+      }
+      function kpDelete() {
+        kpValue = kpValue.slice(0, -1);
+        document.getElementById('keypadDisplay').textContent = '•'.repeat(kpValue.length);
+      }
 
       function checkCode() {
-        if (document.getElementById('codeInput').value.trim() === ACCESS_CODE) {
+        if (kpValue === ACCESS_CODE) {
           document.getElementById('access-box').style.display = 'none';
           document.getElementById('logo').style.display = 'block';
           document.getElementById('monitor').style.display = 'block';
@@ -279,7 +346,7 @@
         currentVisitors.forEach(v => {
           const tr = document.createElement('tr');
           tr.innerHTML = `
-            <td><strong>${escHtml(v.name)}</strong></td>
+            <td><strong class="name-link" onclick="openPersonModal('${escHtml(v.name)}')">${escHtml(v.name)}</strong></td>
             <td><span class="project-tag">${escHtml(v.project || '—')}</span></td>
             <td>${formatTime(v.timeIn)}</td>
             <td><button class="btn btn-red" style="padding:4px 12px;font-size:13px"
@@ -300,7 +367,7 @@
         historyData.forEach(v => {
           const tr = document.createElement('tr');
           tr.innerHTML = `
-            <td><strong>${escHtml(v.name)}</strong></td>
+            <td><strong class="name-link" onclick="openPersonModal('${escHtml(v.name)}')">${escHtml(v.name)}</strong></td>
             <td><span class="project-tag">${escHtml(v.project || '—')}</span></td>
             <td>${formatTime(v.timeIn)}</td>
             <td>${formatTime(v.timeOut)}</td>
@@ -351,6 +418,54 @@
         document.body.appendChild(a); a.click(); document.body.removeChild(a);
         URL.revokeObjectURL(url);
       }
+
+
+      async function openPersonModal(name) {
+        document.getElementById('personModalName').textContent = name;
+        document.getElementById('personModalSub').textContent = 'Loading…';
+        document.getElementById('personModalBody').innerHTML = '<div style="padding:32px;text-align:center;color:#aaa">Loading…</div>';
+        document.getElementById('personModal').classList.add('open');
+        try {
+          const res = await fetch('/api/history/person/' + encodeURIComponent(name));
+          const entries = await res.json();
+          document.getElementById('personModalSub').textContent =
+            entries.length + ' session' + (entries.length !== 1 ? 's' : '') + ' on record';
+          if (!entries.length) {
+            document.getElementById('personModalBody').innerHTML =
+              '<div style="padding:32px;text-align:center;color:#aaa;font-size:14px">No history found.</div>';
+            return;
+          }
+          let html = '<table><thead><tr><th>Date</th><th>In</th><th>Out</th><th>Duration</th></tr></thead><tbody>';
+          entries.forEach(function(e) {
+            const inD  = e.timeIn  ? new Date(e.timeIn)  : null;
+            const outD = e.timeOut ? new Date(e.timeOut) : null;
+            const dateStr = inD ? inD.toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' }) : '—';
+            const inStr   = inD  ? inD.toLocaleTimeString('en-GB',  { hour:'numeric', minute:'2-digit', hour12:true }).toLowerCase() : '—';
+            const outStr  = outD ? outD.toLocaleTimeString('en-GB', { hour:'numeric', minute:'2-digit', hour12:true }).toLowerCase() : 'Still in';
+            let durStr = '—';
+            if (inD && outD) {
+              const mins = Math.round((outD - inD) / 60000);
+              durStr = mins < 60 ? mins + 'm' : Math.floor(mins/60) + 'h ' + (mins % 60) + 'm';
+            }
+            html += '<tr><td>' + dateStr + '</td><td>' + inStr + '</td><td>' + outStr + '</td><td>' + durStr + '</td></tr>';
+          });
+          html += '</tbody></table>';
+          document.getElementById('personModalBody').innerHTML = html;
+        } catch(e) {
+          document.getElementById('personModalBody').innerHTML =
+            '<div style="padding:32px;text-align:center;color:#c00;font-size:14px">Could not load history.</div>';
+        }
+      }
+
+      function closePersonModal() {
+        document.getElementById('personModal').classList.remove('open');
+      }
+
+      document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('personModal').addEventListener('click', function(e) {
+          if (e.target === this) closePersonModal();
+        });
+      });
 
       function escHtml(str) {
         return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
