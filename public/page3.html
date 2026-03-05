@@ -96,13 +96,6 @@
       body { padding-left: max(24px, env(safe-area-inset-left));
              padding-right: max(24px, env(safe-area-inset-right)); }
 
-      #noticeBanner {
-        width: 100%; max-width: 560px;
-        background: #1a1a1a; color: white;
-        border-radius: 10px; padding: 10px 16px;
-        font-size: 13px; font-weight: bold;
-        letter-spacing: 0.03em; display: none; flex-shrink: 0;
-      }
     </style>
   </head>
   <body>
@@ -129,7 +122,6 @@
                autocomplete="off" autocorrect="off" autocapitalize="words" inputmode="text">
         <div id="results"></div>
       </div>
-      <div id="noticeBanner"></div>
       <div id="status"></div>
     </div>
 
@@ -250,12 +242,6 @@
         if (el) el.innerHTML = dayName + ' ' + day + getDaySuffix(day) + ' ' + month + '<br>' + time;
       }
       setInterval(updateClock, 1000); updateClock();
-
-      // Load notice
-      fetch('/api/notice').then(r => r.json()).then(data => {
-        const el = document.getElementById('noticeBanner');
-        if (data && data.text) { el.textContent = '\u2139\ufe0f ' + data.text; el.style.display = 'block'; }
-      }).catch(() => {});
       loadCurrentVisitors();
       document.getElementById('searchInput').focus();
     </script>
