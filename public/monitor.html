@@ -35,7 +35,7 @@
       #gateTopBar {
         display: flex; justify-content: space-between; align-items: center;
       }
-      #gateLogo { width: 110px; overflow: hidden; height: 38px; }
+      #gateLogo { width: 110px; }
       #gateLogo img { width: 100%; display: block; }
 
       #gateHeading {
@@ -135,6 +135,22 @@
       }
 
       #lastUpdated { font-size: 13px; color: #999; margin-top: 10px; text-align: right; }
+
+      /* ── Safe edge padding ── */
+      body { padding-left: max(24px, env(safe-area-inset-left));
+             padding-right: max(24px, env(safe-area-inset-right)); }
+
+      /* ── Background image ── */
+      body::before {
+        content: '';
+        position: fixed; inset: 0; z-index: 0;
+        background-image: url('studio-bw.jpg');
+        background-size: cover;
+        background-position: center;
+        opacity: 0.10;
+        pointer-events: none;
+      }
+      body > * { position: relative; z-index: 1; }
     </style>
   </head>
   <body>
@@ -161,7 +177,7 @@
           <span id="liveDot"></span> Live Monitor
         </div>
         <div class="btn-row">
-          <button class="btn btn-purple" onclick="window.location.href='admin.html'">Manage People</button>
+          <button class="btn btn-purple" onclick="window.location.href='manage.html'">Manage People</button>
           <button class="btn btn-green"  onclick="exportCSV('current')">Export Current</button>
           <button class="btn btn-dark"   onclick="exportCSV('history')">Export History</button>
           <button class="btn btn-red"    onclick="clearAll()">Clear All</button>
