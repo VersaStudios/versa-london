@@ -1,4 +1,3 @@
-
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -60,6 +59,8 @@ function getDefaultPeople() {
           { id: 'p12', name: 'Oliver Riches',   jobTitle: 'Technical Manager',  nfcId: null }
         ]
       },
+      { id: 'shopon-tv',   name: 'ShopOn TV',   visitorProject: false, people: [{ id: 'p13', name: 'Rob Locke', jobTitle: 'Head of Television / Presenter', nfcId: null }] },
+      { id: 'dragons-den', name: 'Dragons Den', visitorProject: false, people: [] },
       { id: 'silverscape', name: 'Silverscape', visitorProject: false, people: [] },
       { id: 'visitor',     name: 'Visitor',     visitorProject: true,  people: [] }
     ]
@@ -266,6 +267,13 @@ app.post('/api/notice', (req, res) => {
 app.get('/api/visitors', (req, res) => res.json(signinData.currentVisitors));
 app.get('/api/history',  (req, res) => res.json(signinData.history));
 
+// ── History for a specific person (all time) ──────────────────
+app.get('/api/history/person/:name', (req, res) => {
+  const name = decodeURIComponent(req.params.name).toLowerCase();
+  const entries = signinData.history.filter(v => v.name.toLowerCase() === name);
+  res.json(entries);
+});
+
 app.post('/api/signin', (req, res) => {
   const { personId, name, jobTitle, project } = req.body;
   if (!name) return res.status(400).json({ error: 'Name required' });
@@ -314,6 +322,13 @@ function scheduleAutoSignout() {
         signinData.history.unshift(v);
       }
       return isShopOn;
+    });
+    // Purge history entries from before today
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    signinData.history = signinData.history.filter(v => {
+      const t = v.timeIn ? new Date(v.timeIn).getTime() : 0;
+      return t >= todayStart.getTime();
     });
     saveSigninData(signinData);
     io.emit('update', signinData.currentVisitors);
