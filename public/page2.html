@@ -212,7 +212,8 @@
       document.getElementById('searchInput').addEventListener('input', function () {
         const query = this.value.trim().toLowerCase();
         const resultsBox = document.getElementById('results');
-        document.getElementById('newVisitorForm').classList.remove('visible');
+        document.getElementById('projectPicker').classList.remove('visible');
+        document.getElementById('newPersonForm').classList.remove('visible');
         document.getElementById('status').textContent = '';
         if (query.length < 1) { resultsBox.style.display = 'none'; return; }
 
@@ -231,7 +232,7 @@
 
         const newDiv = document.createElement('div');
         newDiv.className = 'result-item';
-        newDiv.innerHTML = '<div class="result-name" style="color:#888">+ Sign in as a visitor</div><div class="result-meta">Not on the list</div>';
+        newDiv.innerHTML = '<div class="result-name" style="color:#888">+ I'm not on the list</div><div class="result-meta">Add yourself to a project</div>';
         newDiv.onclick = function() { showNewVisitorForm(document.getElementById('searchInput').value.trim()); };
 
         if (matches.length === 0) {
