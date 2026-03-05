@@ -19,13 +19,13 @@
         display: flex; justify-content: space-between; align-items: center;
         padding: 24px 36px 0; flex-shrink: 0;
       }
-      #logo { width: 110px; overflow: hidden; height: 38px; cursor: pointer; }
+      #logo { width: 110px; cursor: pointer; }
       #logo img { width: 100%; display: block; }
       #clock { text-align: right; font-size: 16px; font-weight: bold; line-height: 1.5; color: #1a1a1a; }
 
       #heading { padding: 20px 36px 0; flex-shrink: 0; }
       #heading h1 {
-        font-size: 18vw; font-weight: 900;
+        font-size: 13vw; font-weight: 900;
         text-transform: uppercase; color: #1a1a1a;
         line-height: 0.85; letter-spacing: -0.01em;
       }
@@ -85,6 +85,10 @@
       }
       /* Ensure all direct children sit above the bg */
       body > * { position: relative; z-index: 1; }
+
+      /* ── Safe edge padding ── */
+      body { padding-left: max(24px, env(safe-area-inset-left));
+             padding-right: max(24px, env(safe-area-inset-right)); }
     </style>
   </head>
   <body>
