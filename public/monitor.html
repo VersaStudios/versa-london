@@ -7,9 +7,9 @@
       * { box-sizing: border-box; margin: 0; padding: 0; }
 
       body {
-        background: #f0f0f0;
+        background: #ffffff;
         display: flex; flex-direction: column; align-items: center;
-        padding: 40px 20px 60px;
+        padding: 0;
         font-family: 'Brother1816', Arial, sans-serif; min-height: 100vh;
       }
 
@@ -20,16 +20,12 @@
         justify-content: flex-start;
         min-height: 100vh;
       }
-      body.gate-mode #access-box {
-        padding: 28px 36px 40px;
-        min-height: 100vh;
-        width: 100%; max-width: 600px;
-      }
 
       /* ── Access gate ── */
       #access-box {
         display: flex; flex-direction: column;
         width: 100%; max-width: 600px;
+        padding: 28px 36px 40px; min-height: 100vh;
       }
 
       #gateTopBar {
@@ -279,13 +275,11 @@
         <div id="personModalBody"></div>
       </div>
     </div>
-    <script src="/socket.io/socket.io.js"></script>
     <script>
       const ACCESS_CODE = '1234';
       let currentVisitors = [], historyData = [];
 
-      // Start in gate mode
-      document.body.classList.add('gate-mode');
+      // Gate is default state
 
       let kpValue = '';
       function kpPress(digit) {
@@ -305,7 +299,6 @@
           document.getElementById('access-box').style.display = 'none';
           document.getElementById('logo').style.display = 'block';
           document.getElementById('monitor').style.display = 'block';
-          document.body.classList.remove('gate-mode');
           document.body.style.background = '#f0f0f0';
           document.body.style.padding = '40px 20px 60px';
           initMonitor();
@@ -318,14 +311,24 @@
 
       function initMonitor() {
         loadHistory();
-        const socket = io();
-        socket.on('update', visitors => {
-          currentVisitors = visitors;
-          renderCurrent();
-          loadHistory();
-          document.getElementById('lastUpdated').textContent =
-            'Last updated: ' + new Date().toLocaleTimeString('en-GB', { hour12: true });
-        });
+        // Load socket.io dynamically so gate works even before it's available
+        const s = document.createElement('script');
+        s.src = '/socket.io/socket.io.js';
+        s.onload = function() {
+          const socket = io();
+          socket.on('update', visitors => {
+            currentVisitors = visitors;
+            renderCurrent();
+            loadHistory();
+            document.getElementById('lastUpdated').textContent =
+              'Last updated: ' + new Date().toLocaleTimeString('en-GB', { hour12: true });
+          });
+        };
+        document.head.appendChild(s);
+        // Also do initial fetch for current visitors
+        fetch('/api/visitors').then(r => r.json()).then(v => {
+          currentVisitors = v; renderCurrent();
+        }).catch(() => {});
       }
 
       async function loadHistory() {
