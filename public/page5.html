@@ -9,98 +9,109 @@
 
       body {
         background: #ffffff;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: space-between;
-        height: 100vh;
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: space-between;
+        height: 100vh; overflow: hidden;
         font-family: 'Brother1816', Arial, sans-serif;
-        overflow: hidden;
-        padding: 40px 24px 36px;
+        padding: 36px 24px 32px;
       }
 
-      #logoWrap {
-        width: 120px; overflow: hidden; height: 42px; flex-shrink: 0;
-      }
+      #logoWrap { width: 120px; overflow: hidden; height: 42px; flex-shrink: 0; }
       #logoWrap img { width: 100%; display: block; }
 
       #message {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        width: 100%;
-        text-align: center;
+        flex: 1; display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        width: 100%; text-align: center;
       }
 
       #farewell {
-        font-size: 20vw;
-        font-weight: 900;
-        text-transform: uppercase;
-        color: #8B0000;
-        line-height: 0.85;
-        letter-spacing: -0.01em;
-        width: 100%;
+        font-size: 20vw; font-weight: 900;
+        text-transform: uppercase; color: #1a1a1a;
+        line-height: 0.85; letter-spacing: -0.01em; width: 100%;
       }
 
       #nameText {
-        font-size: 16vw;
-        font-weight: 900;
-        text-transform: uppercase;
-        color: #8B0000;
-        line-height: 0.9;
-        letter-spacing: -0.01em;
-        width: 100%;
-        word-break: break-word;
+        font-size: 15vw; font-weight: 900;
+        text-transform: uppercase; color: #1a1a1a;
+        line-height: 0.9; letter-spacing: -0.01em;
+        width: 100%; word-break: break-word;
+      }
+
+      #subText {
+        font-size: 4.5vw; font-weight: bold;
+        text-transform: uppercase; color: #ccc;
+        letter-spacing: 0.1em; margin-top: 14px;
       }
 
       button {
-        flex-shrink: 0;
-        padding: 16px 44px;
-        font-size: 18px;
-        border-radius: 12px;
-        cursor: pointer;
-        border: 2px solid #1a1a1a;
-        background: transparent;
-        color: #1a1a1a;
-        font-family: inherit;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
+        flex-shrink: 0; padding: 16px 44px; font-size: 18px;
+        border-radius: 12px; cursor: pointer;
+        border: 2px solid #1a1a1a; background: transparent; color: #1a1a1a;
+        font-family: inherit; letter-spacing: 0.08em; text-transform: uppercase;
         -webkit-tap-highlight-color: transparent;
         transition: background 0.15s, color 0.15s;
       }
       button:active { background: #1a1a1a; color: white; }
+
+      #timerBar {
+        position: fixed; bottom: 0; left: 0;
+        height: 4px; background: #1a1a1a; width: 100%;
+        transform-origin: left; transition: transform 1s linear;
+      }
     </style>
   </head>
   <body>
     <div id="logoWrap"><img src="Versa Logo.png" alt="Versa"></div>
-
     <div id="message">
       <div id="farewell"></div>
       <div id="nameText"></div>
+      <div id="subText"></div>
     </div>
-
     <button onclick="goHome()">Close</button>
+    <div id="timerBar"></div>
 
     <script>
-      const farewells = [
-        'Goodbye', 'See you', 'Cheers', 'Take care',
-        'Later', 'Au revoir', 'Ciao', 'See ya'
+      const standardFarewells = [
+        'Goodbye', 'Bye', 'Farewell', 'See you',
+        'See you soon', 'See you later', 'Take care',
+        'Until next time', 'See you again soon',
+        'Safe travels', 'Bye for now'
       ];
 
-      const farewell = farewells[Math.floor(Math.random() * farewells.length)];
+      const visitorFarewells = [
+        'Thank you for visiting',
+        'We hope to see you again soon',
+        'Have a wonderful day'
+      ];
+
+      // Detect if the person was signed in as a visitor
+      // We store project in sessionStorage when signing out via NFC or name
+      const isVisitor = sessionStorage.getItem('isNewVisitor') === 'true';
       const name = sessionStorage.getItem('visitorName') || 'there';
 
-      document.getElementById('farewell').textContent = farewell + ',';
-      document.getElementById('nameText').textContent = name + '.';
+      const pool = isVisitor ? visitorFarewells : standardFarewells;
+      const farewell = pool[Math.floor(Math.random() * pool.length)];
 
+      document.getElementById('farewell').textContent = farewell + ',';
+      document.getElementById('nameText').textContent  = name + '.';
+
+      // Scale down for long names
       const nameEl = document.getElementById('nameText');
       if (name.length > 10) nameEl.style.fontSize = '11vw';
       if (name.length > 16) nameEl.style.fontSize = '8vw';
 
-      function goHome() { window.location.href = 'index.html'; }
-      setTimeout(goHome, 4000);
+      // ── Timer (3s auto close + red bar) ──
+      let timeLeft = 3;
+      const bar = document.getElementById('timerBar');
+      bar.style.transform = 'scaleX(1)';
+      const t = setInterval(() => {
+        timeLeft--;
+        bar.style.transform = `scaleX(${timeLeft / 3})`;
+        if (timeLeft <= 0) { clearInterval(t); goHome(); }
+      }, 1000);
+
+      function goHome() { clearInterval(t); window.location.href = 'index.html'; }
     </script>
   </body>
 </html>
