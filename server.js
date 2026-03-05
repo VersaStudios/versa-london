@@ -12,10 +12,9 @@ const io = new Server(server);
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Allow the monitor site to fetch data from this server
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, DELETE, PUT, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.sendStatus(200);
   next();
@@ -42,26 +41,27 @@ function getDefaultPeople() {
       {
         id: 'versa-staff', name: 'Versa Staff', visitorProject: false,
         people: [
-          { id: 'p1',  name: 'Andrew Rowell',  jobTitle: 'Technical Manager' },
-          { id: 'p2',  name: 'Lily Britten',   jobTitle: 'Assistant Studio Manager' },
-          { id: 'p3',  name: 'Chris Warden',   jobTitle: 'Group Head of Operations and Technology' },
-          { id: 'p4',  name: 'Esther Brazil',  jobTitle: 'Assistant Operations Manager' },
-          { id: 'p5',  name: 'Ian Curry',      jobTitle: 'Broadcast Engineer' },
-          { id: 'p6',  name: 'Ed Harvey',      jobTitle: 'Head of Studio' },
-          { id: 'p7',  name: 'Ben Riding',     jobTitle: 'Finance Manager' }
+          { id: 'p1',  name: 'Andrew Rowell',  jobTitle: 'Technical Manager',    nfcId: null },
+          { id: 'p2',  name: 'Lily Britten',   jobTitle: 'Assistant Studio Manager', nfcId: null },
+          { id: 'p3',  name: 'Chris Warden',   jobTitle: 'Group Head of Operations and Technology', nfcId: null },
+          { id: 'p4',  name: 'Esther Brazil',  jobTitle: 'Assistant Operations Manager', nfcId: null },
+          { id: 'p5',  name: 'Ian Curry',      jobTitle: 'Broadcast Engineer',   nfcId: null },
+          { id: 'p6',  name: 'Ed Harvey',      jobTitle: 'Head of Studio',       nfcId: null },
+          { id: 'p7',  name: 'Ben Riding',     jobTitle: 'Finance Manager',      nfcId: null }
         ]
       },
       {
         id: 'versa-freelance', name: 'Versa Freelance Crew', visitorProject: false,
         people: [
-          { id: 'p8',  name: 'Howard Knock',    jobTitle: 'Sound Guarantee' },
-          { id: 'p9',  name: 'Andy McLannahan', jobTitle: 'Studio Engineer' },
-          { id: 'p10', name: 'Mark Openshaw',   jobTitle: 'Ingest' },
-          { id: 'p11', name: 'Simon Blunt',     jobTitle: 'Technical Manager' },
-          { id: 'p12', name: 'Oliver Riches',   jobTitle: 'Technical Manager' }
+          { id: 'p8',  name: 'Howard Knock',    jobTitle: 'Sound Guarantee',    nfcId: null },
+          { id: 'p9',  name: 'Andy McLannahan', jobTitle: 'Studio Engineer',    nfcId: null },
+          { id: 'p10', name: 'Mark Openshaw',   jobTitle: 'Ingest',             nfcId: null },
+          { id: 'p11', name: 'Simon Blunt',     jobTitle: 'Technical Manager',  nfcId: null },
+          { id: 'p12', name: 'Oliver Riches',   jobTitle: 'Technical Manager',  nfcId: null }
         ]
       },
-      { id: 'visitor', name: 'Visitor', visitorProject: true, people: [] }
+
+      { id: 'visitor',     name: 'Visitor',     visitorProject: true,  people: [] }
     ]
   };
 }
@@ -76,15 +76,12 @@ function purgeOldVisitors() {
   const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
   const visitorProject = peopleData.projects.find(p => p.visitorProject);
   if (!visitorProject) return;
-
   const before = visitorProject.people.length;
   visitorProject.people = visitorProject.people.filter(p => {
     const added = p.addedAt ? new Date(p.addedAt).getTime() : 0;
     return added > cutoff;
   });
   if (visitorProject.people.length !== before) savePeople(peopleData);
-
-  // Also purge visitor history older than 7 days
   const histBefore = signinData.history.length;
   signinData.history = signinData.history.filter(v => {
     if (v.project !== 'Visitor') return true;
@@ -93,10 +90,17 @@ function purgeOldVisitors() {
   });
   if (signinData.history.length !== histBefore) saveSigninData(signinData);
 }
-
-// Run purge on startup and every hour
 purgeOldVisitors();
 setInterval(purgeOldVisitors, 60 * 60 * 1000);
+
+// ── Helper: find person by NFC ID ────────────────────────────
+function findPersonByNfc(nfcId) {
+  for (const proj of peopleData.projects) {
+    const person = proj.people.find(p => p.nfcId && p.nfcId === nfcId);
+    if (person) return { person, project: proj };
+  }
+  return null;
+}
 
 // ── People API ───────────────────────────────────────────────
 app.get('/api/people', (req, res) => res.json(peopleData));
@@ -104,20 +108,84 @@ app.get('/api/people', (req, res) => res.json(peopleData));
 app.post('/api/people', (req, res) => {
   const { name, jobTitle, projectId } = req.body;
   if (!name || !projectId) return res.status(400).json({ error: 'Name and projectId required' });
-
   const project = peopleData.projects.find(p => p.id === projectId);
   if (!project) return res.status(404).json({ error: 'Project not found' });
-
-  // Visitors: no duplicate check, no job title
   if (!project.visitorProject) {
     const dup = peopleData.projects.some(proj => proj.people.some(p => p.name.toLowerCase() === name.toLowerCase()));
     if (dup) return res.status(409).json({ error: 'Name already exists' });
   }
-
-  const person = { id: uid(), name, jobTitle: project.visitorProject ? '' : (jobTitle || ''), addedAt: new Date().toISOString() };
+  const { company } = req.body;
+  const person = { id: uid(), name, jobTitle: project.visitorProject ? '' : (jobTitle || ''), company: project.visitorProject ? (company || '') : '', nfcId: null, addedAt: new Date().toISOString() };
   project.people.push(person);
   savePeople(peopleData);
   res.json({ success: true, person, projectName: project.name });
+});
+
+// ── Assign NFC card to person ────────────────────────────────
+app.put('/api/people/:personId/nfc', (req, res) => {
+  const { nfcId } = req.body;
+  if (!nfcId) return res.status(400).json({ error: 'nfcId required' });
+
+  // Check not already assigned to someone else
+  const existing = findPersonByNfc(nfcId);
+  if (existing && existing.person.id !== req.params.personId) {
+    return res.status(409).json({ error: `Card already assigned to ${existing.person.name}` });
+  }
+
+  let found = false;
+  for (const proj of peopleData.projects) {
+    const person = proj.people.find(p => p.id === req.params.personId);
+    if (person) { person.nfcId = nfcId; found = true; break; }
+  }
+  if (!found) return res.status(404).json({ error: 'Person not found' });
+  savePeople(peopleData);
+  res.json({ success: true });
+});
+
+// ── Remove NFC card from person ──────────────────────────────
+app.delete('/api/people/:personId/nfc', (req, res) => {
+  let found = false;
+  for (const proj of peopleData.projects) {
+    const person = proj.people.find(p => p.id === req.params.personId);
+    if (person) { person.nfcId = null; found = true; break; }
+  }
+  if (!found) return res.status(404).json({ error: 'Person not found' });
+  savePeople(peopleData);
+  res.json({ success: true });
+});
+
+// ── NFC tap — sign in or out automatically ───────────────────
+app.post('/api/nfc-tap', (req, res) => {
+  const { nfcId } = req.body;
+  if (!nfcId) return res.status(400).json({ error: 'nfcId required' });
+
+  const match = findPersonByNfc(nfcId);
+  if (!match) return res.status(404).json({ error: 'Card not recognised' });
+
+  const { person, project } = match;
+
+  // Toggle: if signed in → sign out, else → sign in
+  const signedInIndex = signinData.currentVisitors.findIndex(
+    v => v.personId === person.id || v.name.toLowerCase() === person.name.toLowerCase()
+  );
+
+  if (signedInIndex !== -1) {
+    // Sign out
+    const visitor = signinData.currentVisitors[signedInIndex];
+    visitor.timeOut = new Date().toISOString();
+    signinData.history.unshift(visitor);
+    signinData.currentVisitors.splice(signedInIndex, 1);
+    saveSigninData(signinData);
+    io.emit('update', signinData.currentVisitors);
+    return res.json({ success: true, action: 'signout', name: person.name });
+  } else {
+    // Sign in
+    const visitor = { personId: person.id, name: person.name, jobTitle: person.jobTitle || '', project: project.name, timeIn: new Date().toISOString() };
+    signinData.currentVisitors.push(visitor);
+    saveSigninData(signinData);
+    io.emit('update', signinData.currentVisitors);
+    return res.json({ success: true, action: 'signin', name: person.name });
+  }
 });
 
 app.delete('/api/people/:personId', (req, res) => {
@@ -150,7 +218,6 @@ app.delete('/api/projects/:projectId', (req, res) => {
   res.json({ success: true });
 });
 
-// ── Sign In / Out API ────────────────────────────────────────
 app.get('/api/visitors', (req, res) => res.json(signinData.currentVisitors));
 app.get('/api/history',  (req, res) => res.json(signinData.history));
 
@@ -186,6 +253,46 @@ app.delete('/api/clear', (req, res) => {
   io.emit('update', signinData.currentVisitors);
   res.json({ success: true });
 });
+
+// ── Auto signout scheduler ──────────────────────────────────
+function scheduleAutoSignout() {
+  const now = new Date();
+
+  // Midnight: sign out everyone except ShopOn
+  const midnight = new Date(now);
+  midnight.setHours(24, 0, 5, 0);
+  setTimeout(() => {
+    signinData.currentVisitors = signinData.currentVisitors.filter(v => {
+      const isShopOn = v.project && v.project.toLowerCase().includes('shopon');
+      if (!isShopOn) {
+        v.timeOut = new Date().toISOString();
+        signinData.history.unshift(v);
+      }
+      return isShopOn;
+    });
+    saveSigninData(signinData);
+    io.emit('update', signinData.currentVisitors);
+    scheduleAutoSignout();
+  }, midnight - now);
+
+  // 6am: sign out ShopOn staff
+  const sixAm = new Date(now);
+  sixAm.setHours(6, 0, 5, 0);
+  if (sixAm <= now) sixAm.setDate(sixAm.getDate() + 1);
+  setTimeout(() => {
+    signinData.currentVisitors = signinData.currentVisitors.filter(v => {
+      const isShopOn = v.project && v.project.toLowerCase().includes('shopon');
+      if (isShopOn) {
+        v.timeOut = new Date().toISOString();
+        signinData.history.unshift(v);
+      }
+      return !isShopOn;
+    });
+    saveSigninData(signinData);
+    io.emit('update', signinData.currentVisitors);
+  }, sixAm - now);
+}
+scheduleAutoSignout();
 
 io.on('connection', socket => socket.emit('update', signinData.currentVisitors));
 
