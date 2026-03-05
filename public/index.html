@@ -19,7 +19,7 @@
       /* ── Top bar ── */
       #topBar {
         width: 100%; display: flex;
-        justify-content: space-between; align-items: center;
+        justify-content: space-between; align-items: flex-start;
         padding: 28px 40px 0; flex-shrink: 0;
       }
 
@@ -32,7 +32,7 @@
       #topRight { text-align: right; }
 
       #clock {
-        font-size: 20px; font-weight: bold;
+        font-size: 14px; font-weight: bold;
         line-height: 1.5; color: #1a1a1a;
       }
 
@@ -41,15 +41,15 @@
         font-size: 14px; color: #444; line-height: 1.6;
       }
       #weatherLine { display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
-      #weatherIcon { font-size: 24px; }
-      #weatherTemp { font-size: 18px; font-weight: bold; }
-      #weatherSun  { font-size: 13px; color: #888; margin-top: 4px; }
+      #weatherIcon { font-size: 16px; }
+      #weatherTemp { font-size: 14px; font-weight: bold; }
+      #weatherSun  { font-size: 11px; color: #888; margin-top: 2px; }
 
       /* ── Centre: Logo ── */
       #centre {
         display: flex; flex-direction: column;
         align-items: center; flex-shrink: 0;
-        flex: 1; justify-content: center;
+        flex: 1; justify-content: center; width: 100%;
       }
 
       #logoWrap { width: 380px; overflow: hidden; height: 160px; }
@@ -65,7 +65,8 @@
       #buttons {
         width: 100%; display: flex;
         padding: 0 28px 32px; gap: 24px;
-        flex: 1; min-height: 0; flex-shrink: 1;
+        flex: 0 0 52vh;
+        margin-top: 20px;
       }
 
       .action-btn {
@@ -100,25 +101,13 @@
       body { padding-left: max(24px, env(safe-area-inset-left));
              padding-right: max(24px, env(safe-area-inset-right)); }
 
-      /* ── Notice banner ── */
-      #noticeBanner {
-        display: none;
-        width: 100%;
-        background: #1a1a1a; color: white;
-        text-align: center; padding: 10px 24px;
-        font-size: 16px; font-weight: bold;
-        letter-spacing: 0.04em; flex-shrink: 0;
-      }
+
     </style>
   </head>
   <body>
 
     <div id="topBar">
       <img id="adminBtn" src="List.png" alt="Admin" onclick="window.location.href='monitor.html'">
-      <div id="centre">
-        <div id="logoWrap"><img src="Versa Logo.png" alt="Versa"></div>
-        <div id="siteLabel">London</div>
-      </div>
       <div id="topRight">
         <div id="clock"></div>
         <div id="weatherBlock">
@@ -131,7 +120,11 @@
       </div>
     </div>
 
-    <div id="noticeBanner"></div>
+    <div id="centre">
+      <div id="logoWrap"><img src="Versa Logo.png" alt="Versa"></div>
+      <div id="siteLabel">London</div>
+    </div>
+
 
     <div id="buttons">
       <button class="action-btn" onclick="window.location.href='page2.html'">In</button>
@@ -178,23 +171,7 @@
 
       startNFC();
 
-      // ── Notice via socket ──
-      if (typeof io !== 'undefined') {
-        const noticeSocket = io();
-        noticeSocket.on('notice-update', data => updateNotice(data));
-      }
-      // Also poll on load
-      fetch('/api/notice').then(r => r.json()).then(updateNotice).catch(() => {});
 
-      function updateNotice(data) {
-        const el = document.getElementById('noticeBanner');
-        if (data && data.text) {
-          el.textContent = '📋 ' + data.text;
-          el.style.display = 'block';
-        } else {
-          el.style.display = 'none';
-        }
-      }
 
       // ── Clock ──
       function getDaySuffix(d) {
@@ -213,7 +190,7 @@
       updateClock();
 
       // ── Weather (Open-Meteo, free, no key needed) ──
-      // Manchester: lat 53.4808, lon -2.2426
+      // Manchester: lat 51.5074, lon -0.1278
       async function loadWeather() {
         try {
           const lat = 51.5074, lon = -0.1278;
