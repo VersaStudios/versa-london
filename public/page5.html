@@ -16,8 +16,17 @@
         padding: 36px 24px 32px;
       }
 
-      #logoWrap { width: 120px; flex-shrink: 0; }
+      #logoWrap { width: 100px; }
       #logoWrap img { width: 100%; display: block; }
+      #p45TopBar { display: flex; justify-content: space-between; align-items: flex-start; width: 100%; flex-shrink: 0; }
+      #topRight { text-align: right; }
+      #clock { font-size: 16px; font-weight: bold; line-height: 1.5; color: #1a1a1a; }
+      #weatherBlock { margin-top: 4px; }
+      #weatherLine { display: flex; align-items: center; justify-content: flex-end; gap: 4px; }
+      #weatherIcon { font-size: 16px; }
+      #weatherTemp { font-size: 14px; font-weight: bold; color: #444; }
+      #weatherSun  { font-size: 11px; color: #888; margin-top: 2px; }
+
 
       #message {
         flex: 1; display: flex; flex-direction: column;
@@ -26,13 +35,13 @@
       }
 
       #farewell {
-        font-size: 13vw; font-weight: 900;
+        font-size: 8vw; font-weight: 900;
         text-transform: uppercase; color: #1a1a1a;
         line-height: 0.85; letter-spacing: -0.01em; width: 100%;
       }
 
       #nameText {
-        font-size: 15vw; font-weight: 900;
+        font-size: 11vw; font-weight: 900;
         text-transform: uppercase; color: #1a1a1a;
         line-height: 0.9; letter-spacing: -0.01em;
         width: 100%; word-break: break-word;
@@ -78,7 +87,16 @@
     </style>
   </head>
   <body>
-    <div id="logoWrap"><img src="Versa Logo.png" alt="Versa"></div>
+    <div id="p45TopBar">
+      <div id="logoWrap"><img src="Versa Logo.png" alt="Versa"></div>
+      <div id="topRight">
+        <div id="clock"></div>
+        <div id="weatherBlock">
+          <div id="weatherLine"><span id="weatherIcon"></span><span id="weatherTemp"></span></div>
+          <div id="weatherSun"></div>
+        </div>
+      </div>
+    </div>
     <div id="message">
       <div id="farewell"></div>
       <div id="nameText"></div>
@@ -127,6 +145,45 @@
         if (timeLeft <= 0) { clearInterval(t); goHome(); }
       }, 1000);
 
+
+      async function loadWeather() {
+        try {
+          const url = 'https://api.open-meteo.com/v1/forecast?latitude=51.5074&longitude=-0.1278&current=temperature_2m,weathercode&daily=sunrise,sunset&timezone=Europe%2FLondon&forecast_days=1';
+          const res = await fetch(url);
+          const data = await res.json();
+          const temp = Math.round(data.current.temperature_2m);
+          const code = data.current.weathercode;
+          const sunrise = data.daily.sunrise[0].split('T')[1];
+          const sunset  = data.daily.sunset[0].split('T')[1];
+          const icMap = {0:'sunny',1:'partly',2:'partly',3:'cloudy',45:'foggy',48:'foggy',51:'drizzle',61:'rainy',71:'snowy',80:'rainy',95:'stormy'};
+          const emojiMap = {'sunny':'&#x2600;','partly':'&#x26C5;','cloudy':'&#x2601;','foggy':'&#x1F32B;','drizzle':'&#x1F326;','rainy':'&#x1F327;','snowy':'&#x1F328;','stormy':'&#x26C8;'};
+          const key = Object.keys(icMap).reverse().find(k => code >= parseInt(k)) || '0';
+          const emoji = emojiMap[icMap[key]] || '&#x1F321;';
+          const el = document.getElementById('weatherTemp');
+          const ic = document.getElementById('weatherIcon');
+          const su = document.getElementById('weatherSun');
+          if (el) el.textContent = temp + String.fromCharCode(176) + 'C';
+          if (ic) ic.innerHTML = emoji;
+          if (su) su.innerHTML = 'Rise ' + sunrise + ' &nbsp; Set ' + sunset;
+        } catch (e) {}
+      }
+      loadWeather();
+      setInterval(loadWeather, 10 * 60 * 1000);
+
+      function getDaySuffix(d) {
+        if (d >= 11 && d <= 13) return 'th';
+        switch (d % 10) { case 1: return 'st'; case 2: return 'nd'; case 3: return 'rd'; default: return 'th'; }
+      }
+      function updateClock() {
+        const now = new Date();
+        const dayName = now.toLocaleString('en-GB', { weekday: 'long' });
+        const day = now.getDate();
+        const month = now.toLocaleString('en-GB', { month: 'long' });
+        const time = now.toLocaleString('en-GB', { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase();
+        const el = document.getElementById('clock');
+        if (el) el.innerHTML = dayName + ' ' + day + getDaySuffix(day) + ' ' + month + '<br>' + time;
+      }
+      setInterval(updateClock, 1000); updateClock();
       function goHome() { clearInterval(t); window.location.href = 'index.html'; }
     </script>
   </body>
