@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Versa London</title>
+  <title>Versa Manchester</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
   <style>
@@ -72,6 +72,17 @@
     body > * { position: relative; z-index: 1; }
 
     /* NFC feedback */
+    #staffBtn {
+      position: fixed; bottom: 20px; right: 20px;
+      background: transparent; border: 1px solid rgba(0,0,0,0.2);
+      color: #aaa; font-size: 12px; font-family: Arial, sans-serif;
+      padding: 8px 16px; border-radius: 999px; cursor: pointer;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      -webkit-tap-highlight-color: transparent;
+      transition: opacity 0.2s;
+      z-index: 10;
+    }
+    #staffBtn:active { opacity: 0.5; }
     #nfcMsg {
       position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
       background: #1a1a1a; color: #fff; padding: 12px 28px;
@@ -97,7 +108,7 @@
 
   <div id="centreLogoArea">
     <img id="centreLogo" src="Versa Logo.png" alt="Versa">
-    <div id="siteLabel">London</div>
+    <div id="siteLabel">Manchester</div>
   </div>
 
   <div id="buttons">
@@ -106,6 +117,7 @@
   </div>
 
   <div id="nfcMsg"></div>
+  <button id="staffBtn" onclick="window.location.href='monitor.html'">Staff</button>
 
   <script>
     // ── Clock ──
@@ -128,7 +140,7 @@
 
     // ── Weather ──
     function loadWeather() {
-      fetch('https://api.open-meteo.com/v1/forecast?latitude=51.5074&longitude=-0.1278&current=temperature_2m,weathercode&daily=sunrise,sunset&timezone=Europe%2FLondon&forecast_days=1')
+      fetch('https://api.open-meteo.com/v1/forecast?latitude=53.4808&longitude=-2.2426&current=temperature_2m,weathercode&daily=sunrise,sunset&timezone=Europe%2FLondon&forecast_days=1')
         .then(function(r) { return r.json(); }).then(function(d) {
           var icons = {0:'☀️',1:'⛅',2:'⛅',3:'☁️',45:'🌫️',51:'🌦️',61:'🌧️',71:'🌨️',80:'🌧️',95:'⛈️'};
           var key = Object.keys(icons).reverse().find(function(k) { return d.current.weathercode >= +k; }) || '0';
