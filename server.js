@@ -59,10 +59,7 @@ function getDefaultPeople() {
           { id: 'p12', name: 'Oliver Riches',   jobTitle: 'Technical Manager',  nfcId: null }
         ]
       },
-      { id: 'shopon-tv',   name: 'ShopOn TV',   visitorProject: false, people: [{ id: 'p13', name: 'Rob Locke', jobTitle: 'Head of Television / Presenter', nfcId: null }] },
-      { id: 'dragons-den', name: 'Dragons Den', visitorProject: false, people: [] },
-      { id: 'silverscape', name: 'Silverscape', visitorProject: false, people: [] },
-      { id: 'visitor',     name: 'Visitor',     visitorProject: true,  people: [] }
+      { id: 'visitor', name: 'Visitor', visitorProject: true, people: [] }
     ]
   };
 }
