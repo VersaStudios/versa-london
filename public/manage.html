@@ -95,29 +95,11 @@
         min-width: 180px; outline: none;
       }
       .add-row input:focus { border-color: #1a1a1a; }
-      .add-row select {
-        padding: 12px 16px; border-radius: 10px;
-        border: 1.5px solid #ccc; font-size: 15px; font-family: inherit;
-        background: white; outline: none; cursor: pointer;
-      }
-      .add-row select:focus { border-color: #1a1a1a; }
       .add-row button {
         padding: 12px 20px; border-radius: 10px; cursor: pointer; border: none;
         background: #1a1a1a; color: white; font-family: inherit; font-size: 15px;
         white-space: nowrap;
       }
-
-      /* ── Scope badge ── */
-      .scope-badge {
-        display: inline-block; font-size: 11px; font-weight: bold;
-        padding: 3px 8px; border-radius: 999px; letter-spacing: 0.04em;
-        margin-left: 8px; text-transform: uppercase; cursor: pointer;
-        border: 1px solid rgba(255,255,255,0.3);
-      }
-      .scope-badge.shared      { background: #4CAF50; color: white; }
-      .scope-badge.london      { background: #3498db; color: white; }
-      .scope-badge.manchester  { background: #e67e22; color: white; }
-      .scope-badge:hover { opacity: 0.85; }
 
       /* ── Project cards ── */
       .project-card {
@@ -309,11 +291,6 @@
 
       <div class="add-row">
         <input id="newProjectName" type="text" placeholder="New project name…" autocomplete="off">
-        <select id="newProjectScope">
-          <option value="shared">Shared (both sites)</option>
-          <option value="london">London only</option>
-          <option value="manchester">Manchester only</option>
-        </select>
         <button onclick="addProject()">+ Add Project</button>
       </div>
 
@@ -333,11 +310,6 @@
     </div>
 
     <script>
-      // ════════════════════════════════════════════════════════════════
-      // ⚠️  CHANGE THIS PER DEPLOYMENT: 'london' or 'manchester'
-      // ════════════════════════════════════════════════════════════════
-      const SITE = 'london';
-
       const ACCESS_CODE = '1956';
       let peopleData = null;
 
@@ -390,17 +362,7 @@
           container.innerHTML = '<p style="color:#aaa;padding:12px 0">No projects yet.</p>';
           return;
         }
-        // Filter: show projects scoped to 'shared' OR this site.
-        // (Projects with no scope default to 'shared' for backward compatibility.)
-        const visible = peopleData.projects.filter(p => {
-          const scope = p.scope || 'shared';
-          return scope === 'shared' || scope === SITE;
-        });
-        if (!visible.length) {
-          container.innerHTML = '<p style="color:#aaa;padding:12px 0">No projects for this site yet.</p>';
-          return;
-        }
-        visible.forEach(proj => {
+        peopleData.projects.forEach(proj => {
           const card = buildProjectCard(proj);
           if (openIds.has(proj.id)) card.classList.add('open');
           container.appendChild(card);
@@ -466,7 +428,7 @@
         card.innerHTML = `
           <div class="project-header" onclick="toggleCard('${proj.id}')">
             <div>
-              <h3>${escHtml(proj.name)}${proj.suspended ? ' <span style="font-size:12px;opacity:0.7">(Suspended)</span>' : ''}<span class="scope-badge ${proj.scope || 'shared'}" onclick="changeScope(event,'${proj.id}','${proj.scope || 'shared'}')" title="Click to change scope">${(proj.scope || 'shared') === 'shared' ? '◆ Shared' : (proj.scope || 'shared') === 'london' ? '● London' : '● Manchester'}</span></h3>
+              <h3>${escHtml(proj.name)}${proj.suspended ? ' <span style="font-size:12px;opacity:0.7">(Suspended)</span>' : ''}</h3>
               <div class="meta">${count} ${count === 1 ? 'person' : 'people'}</div>
             </div>
             <div style="display:flex;align-items:center;gap:8px">
@@ -527,14 +489,12 @@
       // ── Add project ──
       async function addProject() {
         const nameInput = document.getElementById('newProjectName');
-        const scopeInput = document.getElementById('newProjectScope');
         const name = nameInput.value.trim();
-        const scope = scopeInput.value;
         if (!name) { setStatus('Enter a project name.'); return; }
         try {
           const res = await fetch('/api/projects', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, scope })
+            body: JSON.stringify({ name })
           });
           const data = await res.json();
           if (res.status === 409) { setStatus('That project already exists.'); return; }
@@ -580,35 +540,6 @@
           await fetch(`/api/projects/${projectId}/suspend`, { method: 'PUT' });
           loadPeople();
         } catch (e) { setStatus('Could not update project.'); }
-      }
-
-      // ── Change scope ──
-      async function changeScope(event, projectId, currentScope) {
-        event.stopPropagation();
-        const options = ['shared', 'london', 'manchester'];
-        const labels = { shared: 'Shared (both sites)', london: 'London only', manchester: 'Manchester only' };
-        const current = options.indexOf(currentScope);
-        const choice = prompt(
-          'Change project scope:\n\n' +
-          '1 — Shared (both sites)\n' +
-          '2 — London only\n' +
-          '3 — Manchester only\n\n' +
-          `Current: ${labels[currentScope]}\n` +
-          'Enter 1, 2, or 3:'
-        );
-        if (!choice) return;
-        const n = parseInt(choice.trim(), 10);
-        if (![1, 2, 3].includes(n)) { setStatus('Invalid choice.'); return; }
-        const newScope = options[n - 1];
-        if (newScope === currentScope) return;
-        try {
-          const res = await fetch(`/api/projects/${projectId}/scope`, {
-            method: 'PUT', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ scope: newScope })
-          });
-          if (!res.ok) { setStatus('Could not update scope.'); return; }
-          setStatus(''); loadPeople();
-        } catch (e) { setStatus('Could not reach server.'); }
       }
 
       // ── Notice ──
