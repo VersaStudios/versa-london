@@ -1,7 +1,7 @@
 {
   "name": "versa-london",
   "version": "1.0.0",
-  "description": "Versa London Sign-in System",
+  "description": "Versa Manchester Sign-in System",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
