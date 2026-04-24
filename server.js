@@ -29,7 +29,7 @@ let _visitorsCache = null;
 
 async function getPeopleData(activeOnly = false) {
   if (!_peopleCache) {
-    let q = supabase.from('projects').select('*, people(*)').eq('site', SITE);
+    let q = supabase.from('projects').select('*, people(*)').or(`site.eq.${SITE},name.eq.Versa Staff`);
     const { data, error } = await q;
     if (error) throw error;
     _peopleCache = data.map(p => ({
