@@ -40,6 +40,7 @@ async function getPeopleData(activeOnly = false) {
         company: person.company, nfcId: person.nfc_id, addedAt: person.added_at
       }))
     }));
+    _peopleCache.sort((a, b) => (a.name === 'Versa Staff' ? -1 : b.name === 'Versa Staff' ? 1 : 0));
   }
   const projects = activeOnly ? _peopleCache.filter(p => !p.suspended) : _peopleCache;
   return { projects };
