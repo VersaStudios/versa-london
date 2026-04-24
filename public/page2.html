@@ -2,16 +2,24 @@
 <html>
 <head>
   <title>Sign In — Versa</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Versa London">
+  <meta name="format-detection" content="telephone=no">
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; }
+    html, body { overscroll-behavior: none; -webkit-user-select: none; user-select: none; touch-action: manipulation; }
     body {
       background: #fff; display: flex; flex-direction: column; align-items: center;
       height: 100vh; overflow: hidden;
       font-family: 'Bebas Neue', Arial, sans-serif;
       padding: 0 max(24px, env(safe-area-inset-left));
     }
+    /* Allow text selection inside the name search box */
+    input[type="text"] { -webkit-user-select: text; user-select: text; }
     #topBar { width: 100%; display: flex; justify-content: space-between; align-items: flex-start; padding: 20px 0 0; flex-shrink: 0; }
     #logo { width: 100px; cursor: pointer; }
     #logo img { width: 100%; display: block; }
@@ -49,8 +57,8 @@
     #confirmBtn { padding: 16px; font-size: 20px; font-weight: bold; border-radius: 14px; cursor: pointer; border: none; background: #1a1a1a; color: white; font-family: inherit; letter-spacing: 0.04em; text-transform: uppercase; -webkit-tap-highlight-color: transparent; }
     #status { font-size: 14px; color: #c00; min-height: 1.2em; padding: 0 4px; flex-shrink: 0; font-family: Arial, sans-serif; text-transform: none; }
     #timerBar { position: fixed; bottom: 0; left: 0; height: 4px; background: #1a1a1a; width: 100%; transform-origin: left; transition: transform 1s linear; }
-    /* Hide heading when keyboard appears */
-    @media (max-height: 500px) {
+    /* Hide heading when keyboard appears (tight threshold) */
+    @media (max-height: 420px) {
       #heading { display: none !important; }
     }
     body::before { content: ''; position: fixed; inset: 0; z-index: 0; background-image: url('studio-bw.jpg'); background-size: cover; background-position: center; opacity: 0.10; pointer-events: none; }
@@ -248,19 +256,20 @@ function loadWeather() {
 
     function esc(str) { return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
-    // Hide heading when keyboard appears
+    // Hide heading only when keyboard is clearly up (tight threshold)
     if (window.visualViewport) {
       window.visualViewport.addEventListener('resize', function() {
         var heading = document.getElementById('heading');
         if (!heading) return;
-        heading.style.display = window.visualViewport.height < window.screen.height * 0.75 ? 'none' : '';
+        heading.style.display = window.visualViewport.height < window.screen.height * 0.55 ? 'none' : '';
       });
     }
 
     document.getElementById('logo').onclick = function() { window.location.href='index.html'; };
     loadPeople();
     loadVisitors();
-    document.getElementById('searchInput').focus();
+    // Note: do NOT auto-focus the search input on load — this opens the keyboard
+    // immediately and hides the "Sign In" heading. User taps the input when ready.
 
     function loadVisitors() {
       fetch('/api/visitors').then(function(r){return r.json();}).then(function(data){ currentVisitors = data; }).catch(function(){});
