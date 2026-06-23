@@ -29,16 +29,34 @@ let _visitorsCache = null;
 
 async function getPeopleData(activeOnly = false) {
   if (!_peopleCache) {
-    let q = supabase.from('projects').select('*, people(*)').or(`site.eq.${SITE},name.eq.Versa Staff`);
-    const { data, error } = await q;
-    if (error) throw error;
-    _peopleCache = data.map(p => ({
-      id: p.id, name: p.name, visitorProject: p.visitor_project,
-      suspended: p.suspended,
-      people: (p.people || []).map(person => ({
+    // Fetch projects and people separately to avoid Supabase 1000-row nested limit
+    const { data: projects, error: projError } = await supabase
+      .from('projects')
+      .select('*')
+      .or(`site.eq.${SITE},name.eq.Versa Staff`);
+    if (projError) throw projError;
+
+    const { data: people, error: peopleError } = await supabase
+      .from('people')
+      .select('*')
+      .in('project_id', projects.map(p => p.id))
+      .limit(10000);
+    if (peopleError) throw peopleError;
+
+    // Group people by project
+    const peopleByProject = {};
+    for (const person of people) {
+      if (!peopleByProject[person.project_id]) peopleByProject[person.project_id] = [];
+      peopleByProject[person.project_id].push({
         id: person.id, name: person.name, jobTitle: person.job_title,
         company: person.company, nfcId: person.nfc_id, addedAt: person.added_at
-      }))
+      });
+    }
+
+    _peopleCache = projects.map(p => ({
+      id: p.id, name: p.name, visitorProject: p.visitor_project,
+      suspended: p.suspended,
+      people: peopleByProject[p.id] || []
     }));
     _peopleCache.sort((a, b) => (a.name === 'Versa Staff' ? -1 : b.name === 'Versa Staff' ? 1 : 0));
   }
@@ -314,16 +332,6 @@ function scheduleAutoSignout() {
     scheduleAutoSignout();
   }, midnight - now);
 
-  const sixAm = new Date(now); sixAm.setHours(6, 0, 10, 0);
-  if (sixAm <= now) sixAm.setDate(sixAm.getDate() + 1);
-  setTimeout(async () => {
-    const current = await getCurrentVisitors();
-    for (const v of current) {
-      const isShopOn = v.project && v.project.toLowerCase().includes('shopon');
-      if (isShopOn) await supabase.from('visitors').update({ time_out: new Date().toISOString() }).eq('id', v.id);
-    }
-    io.emit('update', await getCurrentVisitors());
-  }, sixAm - now);
 }
 scheduleAutoSignout();
 
