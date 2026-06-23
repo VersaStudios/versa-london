@@ -27,33 +27,42 @@ function uid() { return Date.now().toString(36) + Math.random().toString(36).sli
 let _peopleCache = null;
 let _visitorsCache = null;
 
-async function getPeopleData(activeOnly = false) {
-  if (!_peopleCache) {
-    // Fetch projects and people separately to avoid Supabase 1000-row nested limit
-    const { data: projects, error: projError } = await supabase
-      .from('projects')
-      .select('*')
-      .or(`site.eq.${SITE},name.eq.Versa Staff`);
-    if (projError) throw projError;
-
-    const { data: people, error: peopleError } = await supabase
+async function fetchAllPeople(projectIds) {
+  // Fetch all people in batches of 1000 to bypass Supabase default limit
+  let allPeople = [];
+  let from = 0;
+  const batchSize = 1000;
+  while (true) {
+    const { data, error } = await supabase
       .from('people')
       .select('*')
-      .in('project_id', projects.map(p => p.id))
-      .limit(10000);
-    if (peopleError) throw peopleError;
+      .in('project_id', projectIds)
+      .range(from, from + batchSize - 1);
+    if (error) throw error;
+    allPeople = allPeople.concat(data || []);
+    if (!data || data.length < batchSize) break;
+    from += batchSize;
+  }
+  return allPeople;
+}
 
-    // Group people by project
+async function getPeopleData(activeOnly = false) {
+  if (!_peopleCache) {
+    let q = supabase.from('projects').select('*').or(`site.eq.${SITE},name.eq.Versa Staff`);
+    const { data, error } = await q;
+    if (error) throw error;
+    // Fetch all people separately in batches to bypass 1000 row limit
+    const projectIds = data.map(p => p.id);
+    const allPeople = await fetchAllPeople(projectIds);
     const peopleByProject = {};
-    for (const person of people) {
+    for (const person of allPeople) {
       if (!peopleByProject[person.project_id]) peopleByProject[person.project_id] = [];
       peopleByProject[person.project_id].push({
         id: person.id, name: person.name, jobTitle: person.job_title,
         company: person.company, nfcId: person.nfc_id, addedAt: person.added_at
       });
     }
-
-    _peopleCache = projects.map(p => ({
+    _peopleCache = data.map(p => ({
       id: p.id, name: p.name, visitorProject: p.visitor_project,
       suspended: p.suspended,
       people: peopleByProject[p.id] || []
